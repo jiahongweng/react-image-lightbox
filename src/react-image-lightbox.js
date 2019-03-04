@@ -188,9 +188,6 @@ class ReactImageLightbox extends Component {
     // Used to differentiate between images with identical src
     this.keyCounter = 0;
 
-    // Used to detect a move when all src's remain unchanged (four or more of the same image in a row)
-    this.moveRequested = false;
-
     if (!this.props.animationDisabled) {
       // Make opening animation play
       this.setState({ isClosing: false });
@@ -218,22 +215,22 @@ class ReactImageLightbox extends Component {
     this.loadAllImages();
   }
 
-  componentWillReceiveProps(nextProps) {
+  componentDidUpdate(prevProps) {
     // Iterate through the source types for prevProps and nextProps to
     //  determine if any of the sources changed
     let sourcesChanged = false;
     const prevSrcDict = {};
     const nextSrcDict = {};
     this.getSrcTypes().forEach(srcType => {
-      if (this.props[srcType.name] !== nextProps[srcType.name]) {
+      if (prevProps[srcType.name] !== this.props[srcType.name]) {
         sourcesChanged = true;
 
-        prevSrcDict[this.props[srcType.name]] = true;
-        nextSrcDict[nextProps[srcType.name]] = true;
+        prevSrcDict[prevProps[srcType.name]] = true;
+        nextSrcDict[this.props[srcType.name]] = true;
       }
     });
 
-    if (sourcesChanged || this.moveRequested) {
+    if (sourcesChanged) {
       // Reset the loaded state for images not rendered next
       Object.keys(prevSrcDict).forEach(prevSrc => {
         if (!(prevSrc in nextSrcDict) && prevSrc in this.imageCache) {
@@ -241,16 +238,9 @@ class ReactImageLightbox extends Component {
         }
       });
 
-      this.moveRequested = false;
-
       // Load any new images
-      this.loadAllImages(nextProps);
+      this.loadAllImages(this.props);
     }
-  }
-
-  shouldComponentUpdate() {
-    // Wait for move...
-    return !this.moveRequested;
   }
 
   componentWillUnmount() {
@@ -1239,8 +1229,6 @@ class ReactImageLightbox extends Component {
       );
     }
     this.keyPressed = false;
-
-    this.moveRequested = true;
 
     if (direction === 'prev') {
       this.keyCounter -= 1;
